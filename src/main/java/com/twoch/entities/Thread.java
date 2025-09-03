@@ -6,6 +6,8 @@ public class Thread {
 
     String code;
 
+    String description;
+
     public String getTitle() {
         return title;
     }
@@ -20,5 +22,12 @@ public class Thread {
 
     public void setCode(String code) {
         this.code = code;
+    }
+
+    public String getDescription() {
+        return description;
+    }
+    public void setDescription(String description) {
+        this.description = description;
     }
 }

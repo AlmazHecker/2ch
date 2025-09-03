@@ -8,13 +8,11 @@ import java.util.stream.Stream;
 
 public interface StorageService {
 
-    void init();
-
     void store(MultipartFile file);
 
-    void store(String fileName);
+    void store(String fileName, String content);
 
-    void write(String content);
+    void write(String fileName, String content);
 
     Stream<Path> loadAll();
 
@@ -23,5 +21,7 @@ public interface StorageService {
     Resource loadAsResource(String filename);
 
     void deleteAll();
+
+    void delete(String fileName);
 
 }

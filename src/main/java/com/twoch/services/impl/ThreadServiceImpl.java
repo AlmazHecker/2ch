@@ -1,5 +1,6 @@
 package com.twoch.services.impl;
 
+import com.twoch.dto.response.MessagePaginatedResponse;
 import com.twoch.entities.Message;
 import com.twoch.entities.Thread;
 import com.twoch.services.ThreadService;
@@ -17,22 +18,22 @@ public class ThreadServiceImpl implements ThreadService {
 
     @Override
     public Thread create(Thread thread) {
-        storageService.store(thread.getCode());
-        return null;
+        storageService.store(thread.getCode(), thread.getDescription());
+        return thread;
     }
 
     @Override
-    public void delete(Long threadId) {
-
+    public void delete(String threadCode) {
+        storageService.delete(threadCode);
     }
 
     @Override
-    public List<Message> getMessages(Long threadId) {
+    public MessagePaginatedResponse getMessages(String threadCode) {
         return List.of();
     }
 
     @Override
-    public void addMessage(Long threadId, Message message) {
+    public void addMessage(String threadCode, Message message) {
 
     }
 }

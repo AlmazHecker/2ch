@@ -3,10 +3,7 @@ package com.twoch.storage;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.MalformedURLException;
-import java.nio.file.Files;
-import java.nio.file.Path;
-import java.nio.file.Paths;
-import java.nio.file.StandardCopyOption;
+import java.nio.file.*;
 import java.util.stream.Stream;
 
 import org.springframework.core.io.Resource;
@@ -26,6 +23,13 @@ public class FileSystemService implements StorageService {
         }
 
         this.rootLocation = Paths.get(properties.getLocation());
+
+        try {
+            Files.createDirectories(rootLocation);
+        }
+        catch (IOException e) {
+            throw new StorageException("Could not initialize storage", e);
+        }
     }
 
     @Override
@@ -53,7 +57,7 @@ public class FileSystemService implements StorageService {
     }
 
     @Override
-    public void store(String fileName) {
+    public void store(String fileName, String content) {
         try {
             if (fileName.isEmpty()) {
                 throw new StorageException("Failed to store empty file.");
@@ -61,16 +65,36 @@ public class FileSystemService implements StorageService {
             Path destinationFile = this.rootLocation.resolve(Paths.get(fileName))
                     .normalize().toAbsolutePath();
             if (!destinationFile.getParent().equals(this.rootLocation.toAbsolutePath())) {
-                // This is a security check
-                throw new StorageException(
-                        "Cannot store file outside current directory.");
+                throw new StorageException("Cannot store file outside current directory.");
             }
-            Files.createFile(destinationFile);
-        }
-        catch (IOException e) {
+            if (Files.notExists(destinationFile)) {
+                Files.createFile(destinationFile);
+            }
+            // append content as a single line, no newline or escaping
+            Files.writeString(destinationFile, content, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        } catch (IOException e) {
             throw new StorageException("Failed to store file.", e);
         }
     }
+
+    @Override
+    public void write(String fileName, String content) {
+        try {
+            if (fileName.isEmpty()) {
+                throw new StorageException("Failed to write to empty file name.");
+            }
+            Path destinationFile = this.rootLocation.resolve(Paths.get(fileName))
+                    .normalize().toAbsolutePath();
+            if (!destinationFile.getParent().equals(this.rootLocation.toAbsolutePath())) {
+                throw new StorageException("Cannot write file outside current directory.");
+            }
+            Files.writeString(destinationFile, content, StandardOpenOption.CREATE, StandardOpenOption.APPEND);
+        } catch (IOException e) {
+            throw new StorageException("Failed to write file.", e);
+        }
+    }
+
+
 
     @Override
     public Stream<Path> loadAll() {
@@ -115,12 +139,7 @@ public class FileSystemService implements StorageService {
     }
 
     @Override
-    public void init() {
-        try {
-            Files.createDirectories(rootLocation);
-        }
-        catch (IOException e) {
-            throw new StorageException("Could not initialize storage", e);
-        }
+    public void delete(String fileName) {
+        FileSystemUtils.deleteRecursively(rootLocation.resolve(fileName).toFile());
     }
 }
