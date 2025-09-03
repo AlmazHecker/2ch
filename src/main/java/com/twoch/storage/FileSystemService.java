@@ -9,23 +9,19 @@ import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
 import java.util.stream.Stream;
 
-import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.core.io.Resource;
 import org.springframework.core.io.UrlResource;
 import org.springframework.stereotype.Service;
 import org.springframework.util.FileSystemUtils;
-import org.springframework.util.StringUtils;
 import org.springframework.web.multipart.MultipartFile;
 
 @Service
-public class FileSystemStorageService implements StorageService {
+public class FileSystemService implements StorageService {
 
     private final Path rootLocation;
 
-    @Autowired
-    public FileSystemStorageService(StorageProperties properties) {
-
-        if(properties.getLocation().trim().length() == 0){
+    public FileSystemService(StorageProperties properties) {
+        if(properties.getLocation().trim().isEmpty()){
             throw new StorageException("File upload location can not be Empty.");
         }
 
@@ -50,6 +46,26 @@ public class FileSystemStorageService implements StorageService {
                 Files.copy(inputStream, destinationFile,
                         StandardCopyOption.REPLACE_EXISTING);
             }
+        }
+        catch (IOException e) {
+            throw new StorageException("Failed to store file.", e);
+        }
+    }
+
+    @Override
+    public void store(String fileName) {
+        try {
+            if (fileName.isEmpty()) {
+                throw new StorageException("Failed to store empty file.");
+            }
+            Path destinationFile = this.rootLocation.resolve(Paths.get(fileName))
+                    .normalize().toAbsolutePath();
+            if (!destinationFile.getParent().equals(this.rootLocation.toAbsolutePath())) {
+                // This is a security check
+                throw new StorageException(
+                        "Cannot store file outside current directory.");
+            }
+            Files.createFile(destinationFile);
         }
         catch (IOException e) {
             throw new StorageException("Failed to store file.", e);
